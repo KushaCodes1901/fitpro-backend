@@ -176,3 +176,6 @@ GET /api/v1/users/me
 ## License
 
 This project is created for educational and portfolio purposes.
+
+
+#### Shkamb Kurshumlija
