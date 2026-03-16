@@ -2,15 +2,24 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("FitPro backend is running");
 });
+
+app.use("/api/v1/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 
