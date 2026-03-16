@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TRAINER
+  CLIENT
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  password      String
+  fullName      String
+  role          Role
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  trainerProfile TrainerProfile?
+  clientProfile ClientProfile?
+  sentMessages   Message[]       @relation("SentMessages")
+  receivedMessages Message[]     @relation("ReceivedMessages")
+  notifications Notification[]
+  refreshTokens RefreshToken[]
+}
+
+model TrainerProfile {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  bio         String?
+  specialties String[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clients     ClientProfile[]
+  workoutPlans WorkoutPlan[]
+  nutritionPlans NutritionPlan[]
+  sessions    Session[]
+}
+
+model ClientProfile {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  trainerId      String?
+  age            Int?
+  weightKg       Float?
+  goal           String?
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trainer        TrainerProfile? @relation(fields: [trainerId], references: [id])
+  workoutLogs    WorkoutLog[]
+  sessions       Session[]
+  workoutPlans   WorkoutPlan[]
+  nutritionPlans NutritionPlan[]
+}
+
+model WorkoutPlan {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  trainerId   String
+  clientId    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  trainer     TrainerProfile @relation(fields: [trainerId], references: [id])
+  client      ClientProfile? @relation(fields: [clientId], references: [id])
+  days        WorkoutDay[]
+}
+
+model WorkoutDay {
+  id          String      @id @default(cuid())
+  workoutPlanId String
+  dayLabel    String
+  exercises   Exercise[]
+  workoutPlan WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+}
+
+model Exercise {
+  id          String     @id @default(cuid())
+  workoutDayId String
+  name        String
+  sets        Int
+  reps        Int
+  restSeconds Int?
+  workoutDay  WorkoutDay @relation(fields: [workoutDayId], references: [id], onDelete: Cascade)
+}
+
+model WorkoutLog {
+  id            String       @id @default(cuid())
+  clientProfileId String
+  workoutPlanId String?
+  notes         String?
+  completedAt   DateTime     @default(now())
+  client        ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+}
+
+model NutritionPlan {
+  id            String        @id @default(cuid())
+  trainerId      String
+  clientId       String?
+  title          String
+  notes          String?
+  createdAt      DateTime      @default(now())
+  trainer        TrainerProfile @relation(fields: [trainerId], references: [id])
+  client         ClientProfile? @relation(fields: [clientId], references: [id])
+  meals          Meal[]
+}
+
+model Meal {
+  id              String        @id @default(cuid())
+  nutritionPlanId String
+  name            String
+  calories        Int?
+  protein         Float?
+  carbs           Float?
+  fat             Float?
+  nutritionPlan   NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id          String         @id @default(cuid())
+  trainerId   String
+  clientId    String
+  scheduledAt DateTime
+  status      String         @default("SCHEDULED")
+  notes       String?
+  trainer     TrainerProfile @relation(fields: [trainerId], references: [id])
+  client      ClientProfile  @relation(fields: [clientId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  body       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
