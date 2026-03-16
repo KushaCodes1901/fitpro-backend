@@ -1,0 +1,27 @@
+[0;1;32m●[0m postgresql.service - PostgreSQL database server
+     Loaded: loaded (]8;;file://shkamb-gaming-pc/usr/lib/systemd/system/postgresql.service\/usr/lib/systemd/system/postgresql.service]8;;\; [0;1;32menabled[0m; preset: [0;1;38:5:185mdisabled[0m)
+    Drop-In: /usr/lib/systemd/system/service.d
+             └─]8;;file://shkamb-gaming-pc/usr/lib/systemd/system/service.d/10-timeout-abort.conf\10-timeout-abort.conf]8;;\
+     Active: [0;1;32mactive (running)[0m since Mon 2026-03-16 20:14:37 CET; 6s ago
+ Invocation: cf16cb54839b4d3c8afd970292bfc5f1
+    Process: 43143 ExecStartPre=/usr/libexec/postgresql-check-db-dir postgresql (code=exited, status=0/SUCCESS)
+   Main PID: 43149 (postgres)
+      Tasks: 10[0;38:5:245m (limit: 18906)[0m
+     Memory: 21.8M (peak: 23.1M)
+        CPU: 28ms
+     CGroup: /system.slice/postgresql.service
+             ├─[0;38:5:245m43149 /usr/bin/postgres -D /var/lib/pgsql/data[0m
+             ├─[0;38:5:245m43151 "postgres: logger "[0m
+             ├─[0;38:5:245m43152 "postgres: io worker 0"[0m
+             ├─[0;38:5:245m43153 "postgres: io worker 1"[0m
+             ├─[0;38:5:245m43154 "postgres: io worker 2"[0m
+             ├─[0;38:5:245m43155 "postgres: checkpointer "[0m
+             ├─[0;38:5:245m43156 "postgres: background writer "[0m
+             ├─[0;38:5:245m43159 "postgres: walwriter "[0m
+             ├─[0;38:5:245m43160 "postgres: autovacuum launcher "[0m
+             └─[0;38:5:245m43161 "postgres: logical replication launcher "[0m
+
+Mar 16 20:14:37 shkamb-gaming-pc systemd[1]: Starting postgresql.service - PostgreSQL database server...
+Mar 16 20:14:37 shkamb-gaming-pc postgres[43149]: 2026-03-16 20:14:37.638 CET [43149] LOG:  redirecting log output to logging collector process
+Mar 16 20:14:37 shkamb-gaming-pc postgres[43149]: 2026-03-16 20:14:37.638 CET [43149] HINT:  Future log output will appear in directory "log".
+Mar 16 20:14:37 shkamb-gaming-pc systemd[1]: Started postgresql.service - PostgreSQL database server.

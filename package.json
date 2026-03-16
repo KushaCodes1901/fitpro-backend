@@ -1,0 +1,36 @@
+{
+  "name": "fitpro-backend",
+  "version": "1.0.0",
+  "description": "FitPro is a SaaS fitness coaching platform that connects trainers and clients.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KushaCodes1901/fitpro-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KushaCodes1901/fitpro-backend/issues"
+  },
+  "homepage": "https://github.com/KushaCodes1901/fitpro-backend#readme",
+  "dependencies": {
+    "@prisma/client": "^7.5.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.2",
+    "prisma": "^7.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
