@@ -4,10 +4,287 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  TRAINER
+  CLIENT
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum SessionType {
+  IN_PERSON
+  ONLINE
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role      @default(CLIENT)
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  trainerProfile   TrainerProfile?
+  clientProfile    ClientProfile?
+  sentMessages     Message[]       @relation("sender")
+  receivedMessages Message[]       @relation("receiver")
+  notifications    Notification[]
+  refreshTokens    RefreshToken[]
+}
+
+model TrainerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  bio             String?
+  specializations String[]
+  certifications  String[]
+  yearsExperience Int?
+  phoneNumber     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id])
+  clients        ClientProfile[]
+  workoutPlans   WorkoutPlan[]
+  nutritionPlans NutritionPlan[]
+  sessions       Session[]
+
+  @@index([userId])
+}
+
+model ClientProfile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  trainerId   String?
+  dateOfBirth DateTime?
+  gender      String?
+  height      Float?
+  fitnessGoal String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user          User              @relation(fields: [userId], references: [id])
+  trainer       TrainerProfile?   @relation(fields: [trainerId], references: [id])
+  workoutLogs   WorkoutLog[]
+  measurements  BodyMeasurement[]
+  assignedPlans PlanAssignment[]
+  sessions      Session[]
+
+  @@index([userId])
+  @@index([trainerId])
+}
+
+model WorkoutPlan {
+  id          String     @id @default(uuid())
+  trainerId   String
+  name        String
+  description String?
+  difficulty  Difficulty @default(INTERMEDIATE)
+  isTemplate  Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  trainer     TrainerProfile   @relation(fields: [trainerId], references: [id])
+  days        WorkoutDay[]
+  assignments PlanAssignment[]
+
+  @@index([trainerId])
+}
+
+model WorkoutDay {
+  id        String @id @default(uuid())
+  planId    String
+  dayNumber Int
+  name      String
+  sortOrder Int
+
+  plan      WorkoutPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  exercises PlanExercise[]
+
+  @@index([planId])
+}
+
+model PlanExercise {
+  id           String  @id @default(uuid())
+  dayId        String
+  exerciseName String
+  sets         Int?
+  reps         String?
+  restSeconds  Int?
+  notes        String?
+  sortOrder    Int
+
+  day WorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  @@index([dayId])
+}
+
+model PlanAssignment {
+  id         String    @id @default(uuid())
+  planId     String
+  clientId   String
+  assignedAt DateTime  @default(now())
+  startDate  DateTime?
+  endDate    DateTime?
+  isActive   Boolean   @default(true)
+
+  plan   WorkoutPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  client ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([clientId])
+}
+
+model WorkoutLog {
+  id               String   @id @default(uuid())
+  clientId         String
+  assignmentId     String?
+  workoutDayId     String?
+  completedAt      DateTime @default(now())
+  notes            String?
+  difficultyRating Int?
+
+  client ClientProfile @relation(fields: [clientId], references: [id])
+
+  @@index([clientId])
+  @@index([assignmentId])
+  @@index([workoutDayId])
+}
+
+model BodyMeasurement {
+  id         String   @id @default(uuid())
+  clientId   String
+  loggedAt   DateTime @default(now())
+  weight     Float?
+  bodyFat    Float?
+  chest      Float?
+  waist      Float?
+  hips       Float?
+  leftArm    Float?
+  rightArm   Float?
+  leftThigh  Float?
+  rightThigh Float?
+  notes      String?
+
+  client ClientProfile @relation(fields: [clientId], references: [id])
+
+  @@index([clientId])
+}
+
+model NutritionPlan {
+  id            String   @id @default(uuid())
+  trainerId     String
+  name          String
+  description   String?
+  dailyCalories Int?
+  proteinGrams  Int?
+  carbsGrams    Int?
+  fatGrams      Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  trainer TrainerProfile @relation(fields: [trainerId], references: [id])
+  meals   Meal[]
+
+  @@index([trainerId])
+}
+
+model Meal {
+  id              String  @id @default(uuid())
+  nutritionPlanId String
+  name            String
+  description     String?
+  calories        Int?
+  protein         Int?
+  carbs           Int?
+  fat             Int?
+  sortOrder       Int
+
+  nutritionPlan NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+
+  @@index([nutritionPlanId])
+}
+
+model Session {
+  id          String        @id @default(uuid())
+  trainerId   String
+  clientId    String
+  scheduledAt DateTime
+  durationMin Int           @default(60)
+  type        SessionType   @default(IN_PERSON)
+  status      SessionStatus @default(SCHEDULED)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  trainer TrainerProfile @relation(fields: [trainerId], references: [id])
+  client  ClientProfile  @relation(fields: [clientId], references: [id])
+
+  @@index([trainerId])
+  @@index([clientId])
+  @@index([scheduledAt])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("sender", fields: [senderId], references: [id])
+  receiver User @relation("receiver", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
