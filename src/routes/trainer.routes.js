@@ -2,9 +2,12 @@ const express = require("express");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const { requireRole } = require("../middleware/roleMiddleware");
 const {
-  getTrainerProfile,
-  updateTrainerProfile,
-} = require("../controllers/trainer.controller");
+    getTrainerProfile,
+    updateTrainerProfile,
+    getTrainerClients,
+    assignClientToTrainer,
+    removeClientFromTrainer,
+  } = require("../controllers/trainer.controller");
 
 const router = express.Router();
 
@@ -21,5 +24,26 @@ router.put(
   requireRole("TRAINER"),
   updateTrainerProfile
 );
+
+router.get(
+    "/clients",
+    authenticateToken,
+    requireRole("TRAINER"),
+    getTrainerClients
+  );
+  
+  router.post(
+    "/clients/assign",
+    authenticateToken,
+    requireRole("TRAINER"),
+    assignClientToTrainer
+  );
+  
+  router.delete(
+    "/clients/:clientId",
+    authenticateToken,
+    requireRole("TRAINER"),
+    removeClientFromTrainer
+  );
 
 module.exports = router;
