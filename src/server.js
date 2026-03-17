@@ -3,6 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const testRoutes = require("./routes/test.routes");
+const userRoutes = require("./routes/user.routes");
+const trainerRoutes = require("./routes/trainer.routes");
 const authRoutes = require("./routes/auth.routes");
 
 
@@ -30,3 +32,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/trainer", trainerRoutes);
