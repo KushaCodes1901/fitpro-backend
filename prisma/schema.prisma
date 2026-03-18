@@ -139,19 +139,20 @@ model PlanExercise {
 }
 
 model PlanAssignment {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   planId     String
   clientId   String
-  assignedAt DateTime  @default(now())
+  assignedAt DateTime @default(now())
   startDate  DateTime?
   endDate    DateTime?
-  isActive   Boolean   @default(true)
+  isActive   Boolean  @default(true)
 
-  plan   WorkoutPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
-  client ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  plan       WorkoutPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  client     ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([planId])
   @@index([clientId])
+  @@unique([planId, clientId])
 }
 
 model WorkoutLog {

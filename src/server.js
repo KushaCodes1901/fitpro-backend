@@ -6,6 +6,8 @@ const testRoutes = require("./routes/test.routes");
 const userRoutes = require("./routes/user.routes");
 const trainerRoutes = require("./routes/trainer.routes");
 const authRoutes = require("./routes/auth.routes");
+const planRoutes = require("./routes/plan.routes");
+const clientRoutes = require("./routes/client.routes");
 
 
 const app = express();
@@ -35,3 +37,5 @@ app.listen(PORT, () => {
 
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/trainer", trainerRoutes);
+app.use("/api/v1/trainer/plans", planRoutes);
+app.use("/api/v1/client", clientRoutes);

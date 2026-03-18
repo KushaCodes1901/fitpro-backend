@@ -4,7 +4,7 @@
   "description": "FitPro is a SaaS fitness coaching platform that connects trainers and clients.",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "npx nodemon src/server.js",
     "start": "node src/server.js"
   },
   "repository": {
