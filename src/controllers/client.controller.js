@@ -174,10 +174,47 @@ async function logWorkout(req, res) {
     }
   }
 
+  async function getClientSessions(req, res) {
+    try {
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId: req.user.id },
+      });
+  
+      if (!clientProfile) {
+        return res.status(404).json({ message: "Client profile not found" });
+      }
+  
+      const sessions = await prisma.session.findMany({
+        where: { clientId: clientProfile.id },
+        orderBy: { scheduledAt: "asc" },
+        include: {
+          trainer: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      return res.status(200).json(sessions);
+    } catch (error) {
+      console.error("Get client sessions error:", error);
+      return res.status(500).json({ message: "Server error fetching client sessions" });
+    }
+  }
+
 module.exports = {
   getAssignedPlans,
   logWorkout,
   getWorkoutHistory,
   logBodyMeasurement,
   getMyProgress,
+  getClientSessions,
 };

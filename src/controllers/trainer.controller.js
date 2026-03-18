@@ -275,6 +275,102 @@ async function getTrainerClients(req, res) {
     }
   }
 
+  async function createSession(req, res) {
+    try {
+      const { clientEmail, scheduledAt, durationMin, type, notes } = req.body;
+  
+      if (!clientEmail || !scheduledAt) {
+        return res.status(400).json({ message: "clientEmail and scheduledAt are required" });
+      }
+  
+      const trainerProfile = await prisma.trainerProfile.findUnique({
+        where: { userId: req.user.id },
+      });
+  
+      if (!trainerProfile) {
+        return res.status(404).json({ message: "Trainer profile not found" });
+      }
+  
+      const clientUser = await prisma.user.findUnique({
+        where: { email: clientEmail },
+        include: { clientProfile: true },
+      });
+  
+      if (!clientUser || !clientUser.clientProfile) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+  
+      const session = await prisma.session.create({
+        data: {
+          trainerId: trainerProfile.id,
+          clientId: clientUser.clientProfile.id,
+          scheduledAt: new Date(scheduledAt),
+          durationMin: durationMin || 60,
+          type: type || "ONLINE",
+          notes: notes || null,
+        },
+        include: {
+          client: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      return res.status(201).json({
+        message: "Session created successfully",
+        session,
+      });
+    } catch (error) {
+      console.error("Create session error:", error);
+      return res.status(500).json({ message: "Server error creating session" });
+    }
+  }
+  
+  async function getTrainerSessions(req, res) {
+    try {
+      const trainerProfile = await prisma.trainerProfile.findUnique({
+        where: { userId: req.user.id },
+      });
+  
+      if (!trainerProfile) {
+        return res.status(404).json({ message: "Trainer profile not found" });
+      }
+  
+      const sessions = await prisma.session.findMany({
+        where: { trainerId: trainerProfile.id },
+        orderBy: { scheduledAt: "asc" },
+        include: {
+          client: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      return res.status(200).json(sessions);
+    } catch (error) {
+      console.error("Get trainer sessions error:", error);
+      return res.status(500).json({ message: "Server error fetching trainer sessions" });
+    }
+  }
+
   module.exports = {
     getTrainerProfile,
     updateTrainerProfile,
@@ -282,4 +378,6 @@ async function getTrainerClients(req, res) {
     assignClientToTrainer,
     removeClientFromTrainer,
     getClientProgress,
+    createSession,
+    getTrainerSessions,
   };
