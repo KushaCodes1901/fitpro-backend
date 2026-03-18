@@ -95,8 +95,89 @@ async function logWorkout(req, res) {
     }
   }
 
+  async function logBodyMeasurement(req, res) {
+    try {
+      const {
+        weight,
+        bodyFat,
+        chest,
+        waist,
+        hips,
+        leftArm,
+        rightArm,
+        leftThigh,
+        rightThigh,
+        notes,
+      } = req.body;
+  
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId: req.user.id },
+      });
+  
+      if (!clientProfile) {
+        return res.status(404).json({ message: "Client profile not found" });
+      }
+  
+      const measurement = await prisma.bodyMeasurement.create({
+        data: {
+          clientId: clientProfile.id,
+          weight: weight ?? null,
+          bodyFat: bodyFat ?? null,
+          chest: chest ?? null,
+          waist: waist ?? null,
+          hips: hips ?? null,
+          leftArm: leftArm ?? null,
+          rightArm: rightArm ?? null,
+          leftThigh: leftThigh ?? null,
+          rightThigh: rightThigh ?? null,
+          notes: notes ?? null,
+        },
+      });
+  
+      return res.status(201).json({
+        message: "Body measurement logged successfully",
+        measurement,
+      });
+    } catch (error) {
+      console.error("Log body measurement error:", error);
+      return res.status(500).json({ message: "Server error logging body measurement" });
+    }
+  }
+  
+  async function getMyProgress(req, res) {
+    try {
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId: req.user.id },
+      });
+  
+      if (!clientProfile) {
+        return res.status(404).json({ message: "Client profile not found" });
+      }
+  
+      const measurements = await prisma.bodyMeasurement.findMany({
+        where: { clientId: clientProfile.id },
+        orderBy: { loggedAt: "desc" },
+      });
+  
+      const workouts = await prisma.workoutLog.findMany({
+        where: { clientId: clientProfile.id },
+        orderBy: { completedAt: "desc" },
+      });
+  
+      return res.status(200).json({
+        measurements,
+        workouts,
+      });
+    } catch (error) {
+      console.error("Get my progress error:", error);
+      return res.status(500).json({ message: "Server error fetching progress" });
+    }
+  }
+
 module.exports = {
   getAssignedPlans,
   logWorkout,
   getWorkoutHistory,
+  logBodyMeasurement,
+  getMyProgress,
 };

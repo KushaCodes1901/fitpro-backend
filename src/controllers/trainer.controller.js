@@ -219,10 +219,67 @@ async function getTrainerClients(req, res) {
     }
   }
 
+  async function getClientProgress(req, res) {
+    try {
+      const { clientId } = req.params;
+  
+      const trainerProfile = await prisma.trainerProfile.findUnique({
+        where: { userId: req.user.id },
+      });
+  
+      if (!trainerProfile) {
+        return res.status(404).json({ message: "Trainer profile not found" });
+      }
+  
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { id: clientId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              role: true,
+            },
+          },
+        },
+      });
+  
+      if (!clientProfile) {
+        return res.status(404).json({ message: "Client profile not found" });
+      }
+  
+      if (clientProfile.trainerId !== trainerProfile.id) {
+        return res.status(403).json({ message: "You can only view progress for your own clients" });
+      }
+  
+      const measurements = await prisma.bodyMeasurement.findMany({
+        where: { clientId: clientProfile.id },
+        orderBy: { loggedAt: "desc" },
+      });
+  
+      const workouts = await prisma.workoutLog.findMany({
+        where: { clientId: clientProfile.id },
+        orderBy: { completedAt: "desc" },
+      });
+  
+      return res.status(200).json({
+        client: clientProfile.user,
+        measurements,
+        workouts,
+      });
+    } catch (error) {
+      console.error("Get client progress error:", error);
+      return res.status(500).json({ message: "Server error fetching client progress" });
+    }
+  }
+
   module.exports = {
     getTrainerProfile,
     updateTrainerProfile,
     getTrainerClients,
     assignClientToTrainer,
     removeClientFromTrainer,
+    getClientProgress,
   };

@@ -7,6 +7,7 @@ const {
     getTrainerClients,
     assignClientToTrainer,
     removeClientFromTrainer,
+    getClientProgress,
   } = require("../controllers/trainer.controller");
 
 const router = express.Router();
@@ -44,6 +45,13 @@ router.get(
     authenticateToken,
     requireRole("TRAINER"),
     removeClientFromTrainer
+  );
+
+router.get(
+    "/clients/:clientId/progress",
+    authenticateToken,
+    requireRole("TRAINER"),
+    getClientProgress
   );
 
 module.exports = router;
