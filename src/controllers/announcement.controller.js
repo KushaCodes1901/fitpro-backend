@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { createNotification } = require("../utils/notificationService");
 
 const prisma = new PrismaClient();
 
@@ -29,6 +30,28 @@ async function createAnnouncement(req, res) {
         content,
       },
     });
+
+    const users = await prisma.user.findMany({
+      where: {
+        role: { in: ["TRAINER", "CLIENT"] },
+        isActive: true,
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
+
+    console.log("Creating announcement notifications for users:", users.map((u) => u.email));
+
+    for (const user of users) {
+      await createNotification({
+        userId: user.id,
+        title: "New Announcement",
+        message: title,
+        type: "ANNOUNCEMENT",
+      });
+    }
 
     return res.status(201).json({
       message: "Announcement created successfully",

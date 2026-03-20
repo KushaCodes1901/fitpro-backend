@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function createNotification({ userId, title, message, type = "INFO" }) {
   if (!userId) return null;
 
-  return prisma.notification.create({
+  return await prisma.notification.create({
     data: {
       userId,
       title,
