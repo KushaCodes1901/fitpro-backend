@@ -91,6 +91,7 @@ model ClientProfile {
 
   @@index([userId])
   @@index([trainerId])
+  nutritionAssignments NutritionPlanAssignment[]
 }
 
 model WorkoutPlan {
@@ -207,6 +208,7 @@ model NutritionPlan {
   meals   Meal[]
 
   @@index([trainerId])
+  assignments NutritionPlanAssignment[]
 }
 
 model Meal {
@@ -284,4 +286,19 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model NutritionPlanAssignment {
+  id         String         @id @default(uuid())
+  planId     String
+  clientId   String
+  assignedAt DateTime       @default(now())
+  isActive   Boolean        @default(true)
+
+  plan       NutritionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  client     ClientProfile  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([clientId])
+  @@unique([planId, clientId])
 }
