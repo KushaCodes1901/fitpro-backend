@@ -274,6 +274,14 @@ model RefreshToken {
   @@index([userId])
 }
 
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model PlatformSetting {
   id                String   @id @default(uuid())
   appName           String   @default("FitPro")
