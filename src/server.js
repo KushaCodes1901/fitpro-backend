@@ -10,6 +10,7 @@ const planRoutes = require("./routes/plan.routes");
 const clientRoutes = require("./routes/client.routes");
 const sessionRoutes = require("./routes/session.routes");
 const nutritionRoutes = require("./routes/nutrition.routes");
+const messageRoutes = require("./routes/message.routes");
 
 
 const app = express();
@@ -44,3 +45,4 @@ app.use("/api/v1/trainer/plans", planRoutes);
 app.use("/api/v1/client", clientRoutes);
 app.use("/api/v1/sessions", sessionRoutes);
 app.use("/api/v1/nutrition", nutritionRoutes);
+app.use("/api/v1/messages", messageRoutes);
