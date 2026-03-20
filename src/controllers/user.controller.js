@@ -63,7 +63,86 @@ async function updateCurrentUser(req, res) {
   }
 }
 
+const bcrypt = require("bcryptjs");
+
+async function updatePassword(req, res) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "currentPassword and newPassword are required",
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
+
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { passwordHash },
+    });
+
+    return res.status(200).json({
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.error("Update password error:", error);
+    return res.status(500).json({ message: "Server error updating password" });
+  }
+}
+
+async function updateAvatar(req, res) {
+  try {
+    const { avatarUrl } = req.body;
+
+    if (!avatarUrl) {
+      return res.status(400).json({ message: "avatarUrl is required" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Avatar updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update avatar error:", error);
+    return res.status(500).json({ message: "Server error updating avatar" });
+  }
+}
+
+
 module.exports = {
   getCurrentUser,
   updateCurrentUser,
+  updatePassword,
+  updateAvatar,
 };
