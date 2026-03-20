@@ -185,8 +185,91 @@ async function getMe(req, res) {
   }
 }
 
+const crypto = require("crypto");
+
+const resetTokens = new Map();
+
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        message: "If an account exists for that email, a reset token has been generated",
+      });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = Date.now() + 60 * 60 * 1000;
+
+    resetTokens.set(token, {
+      userId: user.id,
+      expiresAt,
+    });
+
+    return res.status(200).json({
+      message: "Password reset token generated",
+      resetToken: token
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({
+      message: "Server error during forgot password",
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        message: "token and newPassword are required",
+      });
+    }
+
+    const stored = resetTokens.get(token);
+
+    if (!stored || stored.expiresAt < Date.now()) {
+      return res.status(400).json({
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: stored.userId },
+      data: { passwordHash },
+    });
+
+    resetTokens.delete(token);
+
+    return res.status(200).json({
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({
+      message: "Server error during password reset",
+    });
+  }
+}
+
+
 module.exports = {
   register,
   login,
   getMe,
+  forgotPassword,
+  resetPassword,
 };
