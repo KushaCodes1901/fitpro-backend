@@ -210,11 +210,49 @@ async function logWorkout(req, res) {
     }
   }
 
-module.exports = {
-  getAssignedPlans,
-  logWorkout,
-  getWorkoutHistory,
-  logBodyMeasurement,
-  getMyProgress,
-  getClientSessions,
-};
+  async function getAssignedTrainer(req, res) {
+    try {
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId: req.user.id },
+        include: {
+          trainer: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                  role: true,
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      if (!clientProfile) {
+        return res.status(404).json({ message: "Client profile not found" });
+      }
+  
+      if (!clientProfile.trainer || !clientProfile.trainer.user) {
+        return res.status(404).json({ message: "No trainer assigned" });
+      }
+  
+      return res.status(200).json(clientProfile.trainer.user);
+    } catch (error) {
+      console.error("Get assigned trainer error:", error);
+      return res.status(500).json({ message: "Server error fetching assigned trainer" });
+    }
+  }
+
+  
+  module.exports = {
+    getAssignedPlans,
+    logWorkout,
+    getWorkoutHistory,
+    logBodyMeasurement,
+    getMyProgress,
+    getClientSessions,
+    getAssignedTrainer,
+  };
