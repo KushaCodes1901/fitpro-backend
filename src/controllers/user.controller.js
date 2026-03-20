@@ -64,6 +64,45 @@ async function updateCurrentUser(req, res) {
   }
 }
 
+async function updateEmail(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "email is required" });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser && existingUser.id !== req.user.id) {
+      return res.status(409).json({ message: "Email is already in use" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { email },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        avatarUrl: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Email updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update email error:", error);
+    return res.status(500).json({ message: "Server error updating email" });
+  }
+}
+
 async function updatePassword(req, res) {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -178,6 +217,7 @@ async function updateClientProfile(req, res) {
 module.exports = {
   getCurrentUser,
   updateCurrentUser,
+  updateEmail,
   updatePassword,
   updateAvatar,
   updateClientProfile,
