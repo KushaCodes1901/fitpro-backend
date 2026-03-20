@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
@@ -62,8 +63,6 @@ async function updateCurrentUser(req, res) {
     return res.status(500).json({ message: "Server error updating user" });
   }
 }
-
-const bcrypt = require("bcryptjs");
 
 async function updatePassword(req, res) {
   try {
@@ -139,10 +138,47 @@ async function updateAvatar(req, res) {
   }
 }
 
+async function updateClientProfile(req, res) {
+  try {
+    const { dateOfBirth, gender, height, fitnessGoal } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        clientProfile: true,
+      },
+    });
+
+    if (!user || !user.clientProfile) {
+      return res.status(404).json({ message: "Client profile not found" });
+    }
+
+    const updatedProfile = await prisma.clientProfile.update({
+      where: { userId: req.user.id },
+      data: {
+        ...(dateOfBirth !== undefined
+          ? { dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null }
+          : {}),
+        ...(gender !== undefined ? { gender } : {}),
+        ...(height !== undefined ? { height } : {}),
+        ...(fitnessGoal !== undefined ? { fitnessGoal } : {}),
+      },
+    });
+
+    return res.status(200).json({
+      message: "Client profile updated successfully",
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Update client profile error:", error);
+    return res.status(500).json({ message: "Server error updating client profile" });
+  }
+}
 
 module.exports = {
   getCurrentUser,
   updateCurrentUser,
   updatePassword,
   updateAvatar,
+  updateClientProfile,
 };
