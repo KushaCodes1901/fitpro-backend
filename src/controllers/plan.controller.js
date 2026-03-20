@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { createNotification } = require("../utils/notificationService");
 
 const prisma = new PrismaClient();
 
@@ -215,6 +216,13 @@ async function assignPlanToClient(req, res) {
         },
         plan: true,
       },
+    });
+
+    await createNotification({
+      userId: clientUser.id,
+      title: "Workout Plan Assigned",
+      message: `You received a new workout plan: ${plan.name}`,
+      type: "PLAN",
     });
 
     return res.status(200).json({

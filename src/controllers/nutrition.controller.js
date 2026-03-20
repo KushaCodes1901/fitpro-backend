@@ -1,10 +1,19 @@
 const { PrismaClient } = require("@prisma/client");
+const { createNotification } = require("../utils/notificationService");
 
 const prisma = new PrismaClient();
 
 async function createNutritionPlan(req, res) {
   try {
-    const { name, description, dailyCalories, proteinGrams, carbsGrams, fatGrams, meals } = req.body;
+    const {
+      name,
+      description,
+      dailyCalories,
+      proteinGrams,
+      carbsGrams,
+      fatGrams,
+      meals,
+    } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: "Nutrition plan name is required" });
@@ -79,123 +88,6 @@ async function listTrainerNutritionPlans(req, res) {
   } catch (error) {
     console.error("List nutrition plans error:", error);
     return res.status(500).json({ message: "Server error fetching nutrition plans" });
-  }
-}
-
-async function assignNutritionPlanToClient(req, res) {
-  try {
-    const { id } = req.params;
-    const { clientEmail } = req.body;
-
-    if (!clientEmail) {
-      return res.status(400).json({ message: "clientEmail is required" });
-    }
-
-    const trainerProfile = await prisma.trainerProfile.findUnique({
-      where: { userId: req.user.id },
-    });
-
-    if (!trainerProfile) {
-      return res.status(404).json({ message: "Trainer profile not found" });
-    }
-
-    const plan = await prisma.nutritionPlan.findFirst({
-      where: {
-        id,
-        trainerId: trainerProfile.id,
-      },
-    });
-
-    if (!plan) {
-      return res.status(404).json({ message: "Nutrition plan not found" });
-    }
-
-    const clientUser = await prisma.user.findUnique({
-      where: { email: clientEmail },
-      include: { clientProfile: true },
-    });
-
-    if (!clientUser || !clientUser.clientProfile) {
-      return res.status(404).json({ message: "Client not found" });
-    }
-
-    const assignment = await prisma.nutritionPlanAssignment.upsert({
-      where: {
-        planId_clientId: {
-          planId: plan.id,
-          clientId: clientUser.clientProfile.id,
-        },
-      },
-      update: {
-        isActive: true,
-      },
-      create: {
-        planId: plan.id,
-        clientId: clientUser.clientProfile.id,
-        isActive: true,
-      },
-      include: {
-        client: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-        plan: {
-          include: {
-            meals: true,
-          },
-        },
-      },
-    });
-
-    return res.status(200).json({
-      message: "Nutrition plan assigned successfully",
-      assignment,
-    });
-  } catch (error) {
-    console.error("Assign nutrition plan error:", error);
-    return res.status(500).json({ message: "Server error assigning nutrition plan" });
-  }
-}
-
-async function getClientNutritionPlans(req, res) {
-  try {
-    const clientProfile = await prisma.clientProfile.findUnique({
-      where: { userId: req.user.id },
-    });
-
-    if (!clientProfile) {
-      return res.status(404).json({ message: "Client profile not found" });
-    }
-
-    const assignments = await prisma.nutritionPlanAssignment.findMany({
-      where: {
-        clientId: clientProfile.id,
-        isActive: true,
-      },
-      include: {
-        plan: {
-          include: {
-            meals: {
-              orderBy: { sortOrder: "asc" },
-            },
-          },
-        },
-      },
-      orderBy: { assignedAt: "desc" },
-    });
-
-    return res.status(200).json(assignments);
-  } catch (error) {
-    console.error("Get client nutrition plans error:", error);
-    return res.status(500).json({ message: "Server error fetching client nutrition plans" });
   }
 }
 
@@ -274,6 +166,130 @@ async function updateNutritionPlan(req, res) {
   } catch (error) {
     console.error("Update nutrition plan error:", error);
     return res.status(500).json({ message: "Server error updating nutrition plan" });
+  }
+}
+
+async function assignNutritionPlanToClient(req, res) {
+  try {
+    const { id } = req.params;
+    const { clientEmail } = req.body;
+
+    if (!clientEmail) {
+      return res.status(400).json({ message: "clientEmail is required" });
+    }
+
+    const trainerProfile = await prisma.trainerProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!trainerProfile) {
+      return res.status(404).json({ message: "Trainer profile not found" });
+    }
+
+    const plan = await prisma.nutritionPlan.findFirst({
+      where: {
+        id,
+        trainerId: trainerProfile.id,
+      },
+    });
+
+    if (!plan) {
+      return res.status(404).json({ message: "Nutrition plan not found" });
+    }
+
+    const clientUser = await prisma.user.findUnique({
+      where: { email: clientEmail },
+      include: { clientProfile: true },
+    });
+
+    if (!clientUser || !clientUser.clientProfile) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    const assignment = await prisma.nutritionPlanAssignment.upsert({
+      where: {
+        planId_clientId: {
+          planId: plan.id,
+          clientId: clientUser.clientProfile.id,
+        },
+      },
+      update: {
+        isActive: true,
+      },
+      create: {
+        planId: plan.id,
+        clientId: clientUser.clientProfile.id,
+        isActive: true,
+      },
+      include: {
+        client: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        plan: {
+          include: {
+            meals: true,
+          },
+        },
+      },
+    });
+
+    await createNotification({
+      userId: clientUser.id,
+      title: "Nutrition Plan Assigned",
+      message: `You received a new nutrition plan: ${plan.name}`,
+      type: "NUTRITION",
+    });
+
+    return res.status(200).json({
+      message: "Nutrition plan assigned successfully",
+      assignment,
+    });
+  } catch (error) {
+    console.error("Assign nutrition plan error:", error);
+    return res.status(500).json({ message: "Server error assigning nutrition plan" });
+  }
+}
+
+async function getClientNutritionPlans(req, res) {
+  try {
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!clientProfile) {
+      return res.status(404).json({ message: "Client profile not found" });
+    }
+
+    const assignments = await prisma.nutritionPlanAssignment.findMany({
+      where: {
+        clientId: clientProfile.id,
+        isActive: true,
+      },
+      include: {
+        plan: {
+          include: {
+            meals: {
+              orderBy: { sortOrder: "asc" },
+            },
+          },
+        },
+      },
+      orderBy: { assignedAt: "desc" },
+    });
+
+    return res.status(200).json(assignments);
+  } catch (error) {
+    console.error("Get client nutrition plans error:", error);
+    return res.status(500).json({ message: "Server error fetching client nutrition plans" });
   }
 }
 

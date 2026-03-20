@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { createNotification } = require("../utils/notificationService");
 
 const prisma = new PrismaClient();
 
@@ -71,6 +72,13 @@ async function updateUserStatus(req, res) {
         role: true,
         isActive: true,
       },
+    });
+
+    await createNotification({
+      userId: user.id,
+      title: "Account Status Updated",
+      message: `Your account is now ${isActive ? "active" : "inactive"}`,
+      type: "ACCOUNT",
     });
 
     return res.status(200).json({

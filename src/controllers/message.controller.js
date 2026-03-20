@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { createNotification } = require("../utils/notificationService");
 
 const prisma = new PrismaClient();
 
@@ -87,6 +88,13 @@ async function sendMessage(req, res) {
       },
     });
 
+    await createNotification({
+      userId: receiver.id,
+      title: "New Message",
+      message: `${sender.firstName} sent you a message`,
+      type: "MESSAGE",
+    });
+
     return res.status(201).json({
       message: "Message sent successfully",
       data: message,
@@ -101,10 +109,7 @@ async function getMyMessages(req, res) {
   try {
     const messages = await prisma.message.findMany({
       where: {
-        OR: [
-          { senderId: req.user.id },
-          { receiverId: req.user.id },
-        ],
+        OR: [{ senderId: req.user.id }, { receiverId: req.user.id }],
       },
       orderBy: { createdAt: "desc" },
       include: {
@@ -151,14 +156,8 @@ async function getConversationWithUser(req, res) {
     const messages = await prisma.message.findMany({
       where: {
         OR: [
-          {
-            senderId: req.user.id,
-            receiverId: userId,
-          },
-          {
-            senderId: userId,
-            receiverId: req.user.id,
-          },
+          { senderId: req.user.id, receiverId: userId },
+          { senderId: userId, receiverId: req.user.id },
         ],
       },
       orderBy: { createdAt: "asc" },
