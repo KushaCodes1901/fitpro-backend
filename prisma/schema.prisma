@@ -288,6 +288,16 @@ model RefreshToken {
   @@index([userId])
 }
 
+model PlatformSetting {
+  id                String   @id @default(uuid())
+  appName           String   @default("FitPro")
+  allowRegistration Boolean  @default(true)
+  maintenanceMode   Boolean  @default(false)
+  supportEmail      String?  @default("support@fitpro.com")
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+}
+
 model NutritionPlanAssignment {
   id         String         @id @default(uuid())
   planId     String

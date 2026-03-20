@@ -117,9 +117,65 @@ async function getAnalytics(req, res) {
   }
 }
 
+async function getSettings(req, res) {
+  try {
+    let settings = await prisma.platformSetting.findFirst();
+
+    if (!settings) {
+      settings = await prisma.platformSetting.create({
+        data: {},
+      });
+    }
+
+    return res.status(200).json(settings);
+  } catch (error) {
+    console.error("Get settings error:", error);
+    return res.status(500).json({ message: "Server error fetching settings" });
+  }
+}
+
+async function updateSettings(req, res) {
+  try {
+    const {
+      appName,
+      allowRegistration,
+      maintenanceMode,
+      supportEmail,
+    } = req.body;
+
+    let settings = await prisma.platformSetting.findFirst();
+
+    if (!settings) {
+      settings = await prisma.platformSetting.create({
+        data: {},
+      });
+    }
+
+    const updated = await prisma.platformSetting.update({
+      where: { id: settings.id },
+      data: {
+        ...(appName !== undefined ? { appName } : {}),
+        ...(allowRegistration !== undefined ? { allowRegistration } : {}),
+        ...(maintenanceMode !== undefined ? { maintenanceMode } : {}),
+        ...(supportEmail !== undefined ? { supportEmail } : {}),
+      },
+    });
+
+    return res.status(200).json({
+      message: "Settings updated successfully",
+      settings: updated,
+    });
+  } catch (error) {
+    console.error("Update settings error:", error);
+    return res.status(500).json({ message: "Server error updating settings" });
+  }
+}
+
 module.exports = {
   getAllTrainers,
   getAllClients,
   updateUserStatus,
   getAnalytics,
+  getSettings,
+  updateSettings,
 };
