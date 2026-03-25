@@ -142,18 +142,6 @@ If users are still missing
 
 Use the frontend register page or Postman to create users manually.
 
-Suggested test users:
-
-Admin
-Email: admin@fitpro.com
-Password: Admin123!
-Trainer
-Email: sarah_j.trainer@fitpro.com
-Password: SarahJTrainer123!
-Client
-Email: mike_c.client@fitpro.com
-Password: MikeCClient123!
-
 If the admin user is not auto-created, create it manually through the database or an existing seed script.
 
 9. Start the Backend
@@ -184,8 +172,8 @@ POST http://localhost:5000/api/v1/auth/login
 Body:
 
 {
-  "email": "sarah_j.trainer@fitpro.com",
-  "password": "SarahJTrainer123!"
+  "email": "name@email.com",
+  "password": "password"
 }
 11. Important API Areas
 Auth
